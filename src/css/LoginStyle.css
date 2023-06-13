@@ -1,0 +1,10 @@
+.img_login{
+    text-align: center;
+}
+
+
+.logo {
+    margin: 0 0 20px 0;
+    max-height: 100px;
+    max-width: min(300px, 100%);
+  }

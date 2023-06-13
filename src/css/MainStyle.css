@@ -1,0 +1,19 @@
+.btn-crear{
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 60px 80px  !important;
+    flex: 1; 
+    margin: 10px 0; 
+    text-align: center;
+  }
+
+.button-main{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    padding: 10px;
+    margin: 10px;
+}
+  

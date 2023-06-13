@@ -1,0 +1,177 @@
+@import './assets/customFonts.css';
+body{
+  background-color:#F2F2F2 !important;
+  
+}
+
+#app {
+  height: 100%;
+  padding: 0px 0 10px ;
+  font-family: 'Alibaba-PuHuiTi-B', sans-serif;
+}
+
+::selection {
+  color: #fff;
+  background: #008661 !important;
+}
+
+.data_empresa{
+  background-color: #E6E6E6;
+  color: black;
+  padding: 10px 20px;
+  margin: 10px 20px;
+  border-radius:10px
+}
+
+.company_title{
+  text-align: center;
+  font-size: 20px;
+  font-weight:550;
+}
+
+ 
+
+/*添加商品中的按钮*/
+.button-container {
+  padding:10px 0 10px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+/* 设置单个按钮居中 */
+.center-button {
+  margin: 0 auto;
+}
+
+
+
+.btn-add{
+  height: 40px !important;
+}
+
+.btn-main{
+  padding: 10px 10px 30px 10px !important;
+  background-color: #47B28C !important;
+  border-color: #47B28C !important;
+  color: aliceblue !important;
+}
+.btn-main:hover, .btn-main:focus {
+  background-color: #008661 !important;
+  border-color: #008661 !important;
+  background: #fff;
+}
+.btn-calculador{
+  padding: 10px 10px 35px 10px !important;
+  background-color: #47B28C !important;
+  border-color: #47B28C !important;
+  color: aliceblue !important;
+}
+
+
+.ant-collapse-content-box {
+  background-color:  #b8d6ce !important;
+}
+
+.btn-normal{
+  background-color: #008661 !important;
+  color: #fff !important;
+}
+
+.btn-next{
+  background-color: #008661 !important;
+  color: #fff !important;
+  border-top-left-radius: 10px !important;
+  border-bottom-left-radius: 10px !important;
+}
+
+.btn-back{
+  background-color: #008661 !important;
+  color: #fff !important;
+  border-top-right-radius: 10px !important;
+  border-bottom-right-radius: 10px !important;
+}
+
+
+
+.editable-row-operations a {
+  margin-right: 8px;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.btn-right {
+  padding: 10px 0 10px 0;
+  text-align: right;
+}
+
+.space {
+  flex-grow: 1;
+}
+
+.ant-menu-item:focus{
+  color: #fff !important;
+}
+
+
+.ant-collapse-header {
+  display: flex;
+  justify-content: space-between !important;
+  
+  
+}
+
+.large-font {
+  font-size: 24px; /* 根据需要调整字体大小 */
+  font-weight:550;
+}
+
+.list-font{
+  font-size: 20px!important;
+  font-weight:500;
+}
+
+
+.a-list {
+  padding: 0px 10px;
+}
+
+.item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  width: 100%;
+  border-bottom: 1px solid #eee;
+}
+.item-details {
+  color: black;
+  display: flex;
+  
+  justify-content: space-between;
+  flex-grow: 1;
+}
+.item-details h3 {
+  margin: 0;
+  font-size: 18px;
+}
+.item-details div {
+  font-size: 14px;
+}
+
+.main_login{
+  display: flex;
+  flex-direction: column;
+  justify-content:center;
+  align-items: center; 
+  height: 100%;
+}
+
+.search-input{
+  margin-left: 10px!important;
+  margin-right: 20px!important;
+  width: 95%!important;
+}
