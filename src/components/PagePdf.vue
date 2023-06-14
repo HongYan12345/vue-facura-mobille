@@ -301,8 +301,8 @@ export default {
       data.data_empresa = store.state.data_empresa;
       data.dataSource_final[0] = store.state.dataFinal;
       data.isHistory = Number(route.params.history)
-      console.log(store.state.dataFinal);
-      console.log("data_cliente:", data.data_cliente);
+      console.log("[PagePDF]",store.state.dataFinal);
+      console.log("[PagePDF]data_cliente:", data.data_cliente);
     });
 
     return {

@@ -153,13 +153,20 @@
     </a-select>
     <template #footer>
        <div class="button-container">
+        <a-popconfirm
+           v-if="isEdit!=''"
+          title="Are you sure delete this task?"
+          ok-text="Yes"
+          cancel-text="No"
+          @confirm="deleteProducto(codigo)"
+        >
         <a-button
-          v-if="isEdit!=''"
+        v-if="isEdit!=''"
           size="large"
           type="primary"
           danger
-          @click="deleteProducto(codigo)"
           >{{$t('delect')}}</a-button>
+        </a-popconfirm>
         <a-button :class="{ 'center-button': !(isEdit!='') }" key="submit" type="primary" size="large"  @click="saveProducto">{{$t('save')}}</a-button>
        </div>
         

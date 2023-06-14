@@ -112,9 +112,10 @@ import {
   toRaw,
   UnwrapRef,
   computed,
+  createVNode,
 } from "vue"
 import { useRouter } from "vue-router"
-import { PlusOutlined, DeleteOutlined, SearchOutlined} from '@ant-design/icons-vue'
+import { ExclamationCircleOutlined, PlusOutlined, DeleteOutlined, SearchOutlined} from '@ant-design/icons-vue'
 import {
   initAllTable,
   insertClient,
@@ -123,7 +124,7 @@ import {
 } from "../util/dbSqliteM"
 import { addOrUpdateData,  deleteData, getAllData} from "../util/dbFirebase"
 import { FormState} from '../util/interface'
-import { message } from 'ant-design-vue'
+import { message, Modal} from 'ant-design-vue'
 import { useStore } from 'vuex'
 import PageArticulo from './PageArticulo.vue'
 
@@ -169,10 +170,9 @@ export default {
         data.errorClient = true
       } else {
         data.errorClient = false
-        console.log("submit!", toRaw(formState))
-        message.success('Submit client success')
+        console.log("[PageCliente]submit!", toRaw(formState))
         dbStart()
-        onClose()
+       
       }
     }
 
@@ -195,6 +195,13 @@ export default {
 
     const onClose = () => {
       visible.value = false
+      formState.name = "" 
+      formState.direccion = ""
+      formState.nif = ""
+      formState.forma = ""
+      formState.poblation = ""
+      formState.cp = ""
+      formState.telefono = ""
       updatePage()
     }
 
@@ -207,7 +214,7 @@ export default {
       router.back()
     }
 
-    const dbStart = () => {
+    const dbStart = async () => {
       initAllTable()
       const dato = {
         telefono: formState.telefono,
@@ -218,34 +225,36 @@ export default {
         nif: formState.nif,
         forma: formState.forma,
       }
-      console.log("bd:", dato)
+      console.log("[PageCliente]bd:", dato)
       
       if(!store.state.isVisitor){
-        addOrUpdateData("clientes", formState.telefono, dato)
+        await addOrUpdateData("clientes", formState.telefono, dato)
       }
       else{
-        insertClient(dato)
+        await insertClient(dato)
       }
-      formState.name = "" 
-      formState.direccion = ""
-      formState.nif = ""
-      formState.forma = ""
-      formState.poblation = ""
-      formState.cp = ""
-      formState.telefono = ""
+      message.success('Submit client success')
+      onClose()
     }
 
     const delectCliente = (telefono: string) => {
-      
-      deleteData("clientes", telefono)
-     
-      deleteClient(Number(telefono))
-      
-      updatePage()
+      Modal.confirm({
+        title: () => 'Do you want to delete these items?',
+        icon: () => createVNode(ExclamationCircleOutlined),
+        content: () => '',
+        onOk() {
+          
+            deleteData("clientes", telefono)
+            deleteClient(Number(telefono))
+            updatePage()
+          
+        },
+        onCancel() {},
+      })
     }
     const showClient = () => {
       clients.value = []
-      console.log("[PageClient]show client")
+      console.log("[PageCliente]show client")
       if(store.state.isVisitor){
         queryAllTree().then((value) => {
         value.forEach((r: any) => {
@@ -254,12 +263,12 @@ export default {
             label: r.name + ' ,' + r.telefono,
           })
         })
-          console.log("lista clients:", clients.value)
+          console.log("[PageCliente]lista clients:", clients.value)
         })
       }
       else{
         getAllData("clientes").then(allData => {
-          console.log("[PageTable]clientes en FireBase:",allData);
+          console.log("[PageCliente]clientes en FireBase:",allData);
           allData.forEach((r: any) => {
             clients.value.push({
               value: r,
@@ -267,14 +276,13 @@ export default {
             })
           })
         }).catch(error => {
-          console.error("Error getting data: ", error);
+          console.error("[PageCliente]Error getting data: ", error);
         });
       }
       
     }
 
     const filteredClients = computed(() => {
-      console.log("s",searchString)
       if (searchString.value) {
         return clients.value.filter(item => item.label.includes(searchString.value));
       }
@@ -283,7 +291,7 @@ export default {
     })
 
     const handleChange = () => {
-      console.log(data.valueClient)
+      console.log("[PageCliente]", data.valueClient)
     }
 
     const editCliente = (item: FormState) => {

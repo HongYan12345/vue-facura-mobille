@@ -147,6 +147,10 @@
           logOut().then(() => {
             store.commit("RESET_STATE")
             store.commit("logOut")
+            current.value[0] = "1"
+            router.push({
+              name: "main",
+            });
           }
         )
         }
@@ -160,8 +164,8 @@
       };
   
       const handleMenu: MenuProps["onClick"] = (e) => {
-        console.log(e.key);
-        console.log(current.value);
+        //console.log(e.key);
+        //console.log(current.value);
         if (e.key == 1) {
           if (current.value[0] == "2") {
             router.back();

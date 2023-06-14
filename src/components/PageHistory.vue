@@ -52,12 +52,13 @@
 
 <script lang="ts">
 import { defineComponent, reactive, toRefs, ref,
-        onMounted, computed } from 'vue'
+        onMounted, computed, createVNode, } from 'vue'
 import { queryFactura, deleteFactura} from '../util/dbSqliteM'
 import { useRouter} from 'vue-router'
 import { useStore } from 'vuex'
 import { useI18n} from "vue-i18n"
-import { CopyOutlined, DeleteOutlined, LoadingOutlined, SearchOutlined} from '@ant-design/icons-vue'
+import { Modal} from 'ant-design-vue'
+import { ExclamationCircleOutlined, CopyOutlined, DeleteOutlined, LoadingOutlined, SearchOutlined} from '@ant-design/icons-vue'
 import { FacturaState} from '../util/interface'
 import { deleteData, getAllData} from "../util/dbFirebase"
 
@@ -190,19 +191,32 @@ export default defineComponent({
     };
 
     const deletFactura = (item:FacturaState) => {
-      
-        deleteData("facturas", item.factura_num+item.factura_date.split('/')[2]).then(value => {
-          console.log("delect success", value);
-        }).catch(error => {
-          console.error("Error getting data: ", error);
-        });
+      Modal.confirm({
+        title: () => 'Do you want to delete these items?',
+        icon: () => createVNode(ExclamationCircleOutlined),
+        content: () => '',
+        onOk() {
+          
+          
      
         deleteFactura(item.id).then(value => {
           console.log("delect success", value);
+          if(!store.state.isVisitor){
+            deleteData("facturas", item.factura_num+item.factura_date.split('/')[2]).then(value => {
+          console.log("delect success", value);
+          showFactura()
         }).catch(error => {
           console.error("Error getting data: ", error);
         });
-      showFactura()
+          }
+        }).catch(error => {
+          console.error("Error getting data: ", error);
+        });
+          
+        },
+        onCancel() {},
+      })
+      
     }
 
     const parsedItem = (item:FacturaState)=>{

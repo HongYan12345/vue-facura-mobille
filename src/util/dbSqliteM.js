@@ -1,3 +1,4 @@
+let db
 function conn() {
   return new Promise((resolve, reject) => {
     if (!db) {
