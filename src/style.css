@@ -75,24 +75,35 @@ body{
 }
 
 .btn-normal{
-  background-color: #008661 !important;
+  background-color: #47B28C !important;
   color: #fff !important;
 }
 
-.btn-next{
+.btn-normal:active{
   background-color: #008661 !important;
+}
+
+.btn-next{
+  background-color: #47B28C !important;
   color: #fff !important;
   border-top-left-radius: 10px !important;
   border-bottom-left-radius: 10px !important;
 }
 
-.btn-back{
+.btn-next:active{
   background-color: #008661 !important;
+}
+
+.btn-back{
+  background-color: #47B28C !important;
   color: #fff !important;
   border-top-right-radius: 10px !important;
   border-bottom-right-radius: 10px !important;
 }
 
+.btn-back:active{
+  background-color: #008661 !important;
+}
 
 
 .editable-row-operations a {

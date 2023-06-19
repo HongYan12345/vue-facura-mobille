@@ -41,6 +41,7 @@ const messages={
     upload:"Subir dato",
     repassword:"olvida la contraseña",
     uplocal:"Subir datos a local",
+    send:"Enviar correo",
   },
   en: {
     lenguage: "Lenguage",
@@ -82,6 +83,7 @@ const messages={
     upload:"Upload dato",
     repassword:"forget the password",
     uplocal:"Upload data to local",
+    send:"Send email",
   },
   zh: {
     lenguage: "语言",
@@ -123,6 +125,7 @@ const messages={
     upload:"上传数据",
     repassword:"忘记密码",
     uplocal:"上传数据到本地",
+    send:"发送邮件",
   },
 };
 

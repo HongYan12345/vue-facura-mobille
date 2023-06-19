@@ -1,0 +1,13 @@
+.btn-export{
+    background-color: #47B28C !important;
+    width: 80%;
+    color: aliceblue !important;
+    border-radius: 10px !important;
+    margin: 0 auto;
+    display: block;
+    margin-top: 30px;
+}
+
+.btn-export:active{
+    background-color: #008661 !important;
+}

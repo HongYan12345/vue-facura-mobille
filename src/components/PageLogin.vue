@@ -145,6 +145,14 @@
     @ok="handleOkEmail"
   >
     <a-input v-model:value="formState.email" spellcheck="false">{{ $t("email") }}:</a-input>
+    <template #footer>
+       
+       <a-button
+         size="large"
+         type="primary"
+         class="btn-normal"
+         >{{$t('send')}}</a-button>
+   </template>
   </a-modal>
   
 </template>

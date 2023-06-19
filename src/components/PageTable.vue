@@ -167,7 +167,7 @@
           danger
           >{{$t('delect')}}</a-button>
         </a-popconfirm>
-        <a-button :class="{ 'center-button': !(isEdit!='') }" key="submit" type="primary" size="large"  @click="saveProducto">{{$t('save')}}</a-button>
+        <a-button :class="{ 'center-button': !(isEdit!='') }" class="btn-normal" key="submit" type="primary" size="large"  @click="saveProducto">{{$t('save')}}</a-button>
        </div>
         
       </template>
