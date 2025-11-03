@@ -1,4 +1,5 @@
 import html2Canvas from 'html2canvas';
+import JsPDF from 'jspdf';
 
 export async function export_pdf(html, num){
   let top = html
@@ -8,33 +9,123 @@ export async function export_pdf(html, num){
   }
   let title = "N." + num;
   const container = html
+  // 使用 scrollWidth/scrollHeight 捕获完整内容高度，避免只截取首屏
+  const rect = container && container.getBoundingClientRect ? container.getBoundingClientRect() : { width: 794, height: 1123 };
+  const targetWidth = Math.max(1, Math.round((container && container.scrollWidth) ? container.scrollWidth : rect.width));
+  const targetHeight = Math.max(1, Math.round((container && container.scrollHeight) ? container.scrollHeight : rect.height));
   console.log("[exportPdf]N.", num)
   html2Canvas(container, {
     scale: 3,
-    useCORS: true 
+    useCORS: true,
+    width: targetWidth,
+    height: targetHeight,
+    windowWidth: targetWidth,
+    windowHeight: targetHeight,
+    backgroundColor: '#ffffff'
   }).then(function (canvas) {
-    let base64Image = canvas.toDataURL('image/jpeg', 1.0);
-    let options = {
-      data: base64Image,
-      documentSize: "A4",
-      type: "jpeg",
-      fileName: `${title}.pdf`,
-      directory: "docs",
-      base64: true,
-      displayHeaderFooter : true
-    };
-    document.addEventListener('deviceready', function() {
-    window.plugin.htmltopdf.create(options,
-      function(filePath) {
-        console.log('[exportPdf]pdf save', filePath);
-        window.plugins.socialsharing.share(null, null, filePath, null);
-      },
-      function(error) {
-        console.error("[exportPdf]Failed to save pdf", error);
+    // 获取canvas画布的宽高（加入保护，避免为0）
+    console.log('[exportPdf] canvas size:', canvas.width, canvas.height)
+    let contentWidth = canvas.width;
+    let contentHeight = canvas.height;
+    
+    // A4纸的尺寸[595.28, 841.89]，单位pt
+    let pageHeight = 841.89;
+    let pageWidth = 595.28;
+    if (!contentWidth || contentWidth <= 0) contentWidth = pageWidth;
+    if (!contentHeight || contentHeight <= 0) contentHeight = pageHeight;
+    
+    // 将高度换算到 PDF 单位（pt），保持单位一致
+    // 以 imgWidth = pageWidth 为基准缩放，按比例换算得到 imgHeight（pt）
+    let imgWidth = pageWidth;
+    let imgHeight = pageWidth / contentWidth * contentHeight; // pt
+
+    // 若仅轻微超过一页高度（例如边框/内边距/浮点误差造成的溢出），按高度微缩至单页
+    const smallOverflow = imgHeight - pageHeight;
+    if (smallOverflow > 0 && smallOverflow <= 6) { // 允许最多约2mm的超出
+      const scaleFix = pageHeight / imgHeight;
+      imgWidth = imgWidth * scaleFix;
+      imgHeight = pageHeight;
+    }
+    console.log('[exportPdf] computed img size pt:', imgWidth, imgHeight, 'overflow:', smallOverflow)
+    
+    // 创建PDF对象
+    let PDF = new JsPDF('p', 'pt', 'a4');
+    // 计算总页数（pt 单位），加入微小容差避免浮点误差导致多一页
+    const epsilon = 4; // 4pt 容差，进一步避免第二页后产生空白第三页
+    const totalPages = Math.max(1, Math.ceil((imgHeight - epsilon) / pageHeight));
+    let currentPage = 1;
+    
+    // 生成页面数据
+    let pageData = canvas.toDataURL('image/jpeg', 1.0);
+    
+    // 当内容未超过a4纸一页显示的范围，无需分页（加入容差）
+    if (imgHeight <= pageHeight + epsilon) {
+      try {
+        PDF.addImage(pageData, 'JPEG', 0, 0, imgWidth, imgHeight);
+      } catch (e) {
+        console.error('[exportPdf] addImage error (single page):', e)
       }
-    )
-  })
-}, false)
+      PDF.setFontSize(10);
+      PDF.text(`Page 1/1`, pageWidth - 60, pageHeight - 20);
+    } else {
+      // 固定切片分页，彻底避免尾部空白页
+      for (let i = 0; i < totalPages; i++) {
+        const position = -i * pageHeight;
+        try {
+          PDF.addImage(pageData, 'JPEG', 0, position, imgWidth, imgHeight);
+        } catch (e) {
+          console.error('[exportPdf] addImage error (multi page slice):', e)
+          break;
+        }
+        // 遮罩切片边缘：在续页顶部绘制白色矩形，避免上缘出现分割线
+        if (i > 0) {
+          try {
+            PDF.setFillColor(255, 255, 255);
+            PDF.rect(0, 0, pageWidth, 3, 'F'); // 3pt 高度足以覆盖 1px 的边框线
+          } catch (e) {
+            console.warn('[exportPdf] mask top seam failed:', e)
+          }
+        }
+        PDF.setFontSize(10);
+        PDF.text(`Page ${i + 1}/${totalPages}`, pageWidth - 60, pageHeight - 20);
+        if (i < totalPages - 1) PDF.addPage();
+      }
+    }
+    
+    // 保存PDF文件
+    try {
+      PDF.save(`${title}.pdf`);
+    } catch (e) {
+      console.error('[exportPdf] save error:', e)
+    }
+    
+    // 如果需要使用Cordova插件分享，可以使用以下代码
+    try {
+      // 转换为blob
+      const pdfOutput = PDF.output('blob');
+      
+      // 使用Cordova插件保存和分享
+      document.addEventListener('deviceready', function() {
+        window.resolveLocalFileSystemURL(cordova.file.dataDirectory, function(directoryEntry) {
+          directoryEntry.getFile(`${title}.pdf`, { create: true }, function(fileEntry) {
+            fileEntry.createWriter(function(fileWriter) {
+              fileWriter.onwriteend = function() {
+                console.log("[exportPdf]pdf save");
+                const fileURL = fileEntry.toURL();
+                window.plugins.socialsharing.share(null, null, fileURL, null);
+              };
+              fileWriter.onerror = function(e) {
+                console.error("[exportPdf]Failed to save pdf", e);
+              };
+              fileWriter.write(pdfOutput);
+            });
+          });
+        });
+      }, false);
+    } catch (e) {
+      console.log("[exportPdf] Cordova plugin not available, using direct download");
+    }
+  });
 }
 /*
 import html2Canvas from 'html2canvas';
