@@ -39,13 +39,8 @@ export async function export_pdf(html, num){
     let imgWidth = pageWidth;
     let imgHeight = pageWidth / contentWidth * contentHeight; // pt
 
-    // 若仅轻微超过一页高度（例如边框/内边距/浮点误差造成的溢出），按高度微缩至单页
+    // 保持满宽输出：不在轻微溢出时整体缩小，改为正常分页
     const smallOverflow = imgHeight - pageHeight;
-    if (smallOverflow > 0 && smallOverflow <= 6) { // 允许最多约2mm的超出
-      const scaleFix = pageHeight / imgHeight;
-      imgWidth = imgWidth * scaleFix;
-      imgHeight = pageHeight;
-    }
     console.log('[exportPdf] computed img size pt:', imgWidth, imgHeight, 'overflow:', smallOverflow)
     
     // 创建PDF对象
