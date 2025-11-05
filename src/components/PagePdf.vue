@@ -39,8 +39,8 @@
         <div style="display: flex; flex-direction: column; gap: 4px;">
           <!-- 行1：公司与客户名称 -->
           <div style="display: flex;">
-            <div style="flex: 1; padding-right: 20px;"><strong>COMPANY:</strong> {{ data_empresa.name }}</div>
-            <div style="flex: 1;"><strong>CLIENT:</strong> {{ data_cliente.name }}</div>
+            <div style="flex: 1; padding-right: 20px;"><strong>Empresa:</strong> {{ data_empresa.name }}</div>
+            <div style="flex: 1;"><strong>Cliente:</strong> {{ data_cliente.name }}</div>
           </div>
           <!-- 行2：NIF -->
           <div style="display: flex;">
