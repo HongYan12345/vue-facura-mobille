@@ -3,73 +3,48 @@
       <a-button @click="goBack" class="btn-back" size="large">{{$t('back')}}</a-button>
        <a-button @click="goPdf" class="btn-next" size="large">{{$t('next')}}</a-button>
     </div>
-  <a-collapse
-    :bordered="false"
-    class="collapse-total"
-    
-  >
-    <a-collapse-panel >
-      <template #header>
-        <div style="margin-left: 0;"> <span>{{$t('total_euro')}}</span></div>
-        <div class="space"></div>
-        <div>
-          <div v-if="isIva">con iva</div>
-          <div v-else>sin iva</div>
-          <div v-if="isRe">con re</div>
-          <div v-else>sin re</div>
+
+    <div class="total-header">
+      <div class="header-wrap header-bold">
+        <div class="header-row">
+          <div class="header-left-controls">
+            <div class="header-controls vertical">
+              <a-input-number
+                size="small"
+                v-model:value="displayDto"
+                @change="calcula"
+                addon-before="DTO"
+                :min="0"
+                :max="99"
+              >%</a-input-number>
+              <div class="line-break"></div>
+              <a-checkbox :checked="isIva" @click="checkIva">+21%IVA</a-checkbox>
+              <div class="line-break"></div>
+              <a-checkbox :checked="isRe" @click="checkRe">+5.2%R.E.</a-checkbox>
+              </div>
+          </div>
+          <div class="header-right-info">
+            <div class="large-font"><span>{{$t('total_euro')}}:{{ total_euros.toFixed(2) }}€</span></div>
+            <div class="header-summary">
+              <div class="summary-row">
+                <span class="summary-value">&nbspTotal:&nbsp{{ total.toFixed(2) }}</span>
+              </div>
+              <div class="summary-row" v-if="dto > 0">
+                <span class="summary-value">{{ dto }}%DTO:-{{ Number(total * 0.01 * dto).toFixed(2) }}</span>
+              </div>
+              <div class="summary-row" v-if="isIva">
+                <span class="summary-value">&nbsp+21%IVA:&nbsp{{ iva.toFixed(2) }}</span>
+              </div>
+              <div class="summary-row" v-if="isRe">
+                <span class="summary-value">&nbsp+5.2%R.E.&nbsp{{ re.toFixed(2) }}</span>
+              </div>
+              
+            </div>
+          </div>
         </div>
-        <div class="space"></div>
-        <div class="large-font"><span >{{ total_euros.toFixed(2) }}€</span></div>
-          
-      </template>
-      <a-row :gutter="16">
-        <a-col :xs="18" :sm="12" :md="12" :lg="6">
-          <a-input-number
-            size="small"
-            style="padding-bottom: 8px"
-            v-model:value="displayDto"
-            @change="calcula"
-            addon-before="DTO"
-            :min="0"
-            :max="99"
-            >%</a-input-number
-          >
-        </a-col>
-      </a-row>
-      <a-row>
-        <a-col :span="12"> &nbspTotal:</a-col>
-        <a-col :span="12" class="text-right">
-          {{ total.toFixed(2) }}
-        </a-col>
-      </a-row>
-      <a-row v-if="dto > 0">
-        <a-col :span="12"> &nbsp{{ dto }}%DTO:</a-col>
-        <a-col :span="12" class="text-right">
-          -{{ Number(total * 0.01 * dto).toFixed(2) }}
-        </a-col>
-      </a-row>
-      <a-row>
-        <a-col :span="12">
-          &nbsp<a-checkbox :checked="isIva" @click="checkIva"
-            >+21%IVA</a-checkbox
-          ></a-col
-        >
-        <a-col :span="12" class="text-right">
-          {{ iva.toFixed(2) }}
-        </a-col>
-      </a-row>
-      <a-row>
-        <a-col :span="12">
-          &nbsp<a-checkbox :checked="isRe" @click="checkRe"
-            >+5.2%R.E.</a-checkbox
-          ></a-col
-        >
-        <a-col :span="12" class="text-right">
-          {{ re.toFixed(2) }}
-        </a-col>
-      </a-row>
-    </a-collapse-panel>
-  </a-collapse>
+      </div>
+    </div>
+
 
   
 
@@ -81,7 +56,7 @@
       <a-list
         class="a-list"
         item-layout="horizontal"
-        :data-source="dataSource"
+        :data-source="reversedDataSource"
         :locale="{ emptyText: ' ' }"
       >
         <template #renderItem="{ item }">
@@ -143,14 +118,13 @@
         ></a-input>
       </a-col>
     </a-row>
-    <a-select
-      v-model:value="articulo"
-      show-search
-      placeholder="Select"
-      style="width: 100%"
-      :options="articulo_list"
-    >
-    </a-select>
+    <div class="articulo-list">
+      <a-radio-group v-model:value="articulo" style="width: 100%">
+        <div v-for="opt in articulo_list" :key="opt.value" class="articulo-item">
+          <a-radio :value="opt.value">{{ opt.value }}</a-radio>
+        </div>
+      </a-radio-group>
+    </div>
     <template #footer>
        <div class="button-container">
         <a-popconfirm
@@ -236,6 +210,8 @@ export default {
   
     //lista de producto
     const dataSource: Ref<DataItem[]> = ref([]);
+    // 倒序显示（不改变原数组顺序与其它逻辑）
+    const reversedDataSource = computed(() => dataSource.value.slice().reverse());
     const count = computed(() => dataSource.value.length + 1);
     const confirmLoading = ref<boolean>(false);
     //lista de articulo
@@ -454,6 +430,7 @@ export default {
       t,
       displayDto,
       dataSource,
+      reversedDataSource,
       checkIva,
       checkRe,
       calcula,
@@ -475,6 +452,87 @@ export default {
 };
 </script>
 <style scoped>
+
+.header-bold {
+  font-weight: 600;
+}
+.total-header {
+  padding: 8px 12px;
+}
+.header-wrap {
+  display: flex;
+  flex-direction: column;
+}
+.header-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+.header-left-controls {
+  flex: 1 1 40%;
+}
+.header-right-info {
+  flex: 1 1 60%;
+  text-align: right;
+}
+.header-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+}
+.header-controls.vertical {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+.switch-gap {
+  display: inline-block;
+  width: 12px;
+}
+.header-summary {
+  margin-top: 6px;
+  text-align: right;
+}
+.summary-row {
+  display: flex;
+  justify-content: flex-end;
+}
+.summary-value {
+  text-align: right;
+}
+.header-right-title {
+  margin-bottom: 4px;
+}
+
+.line-break {
+  display: block;
+  height: 8px;
+}
+
+/* Add button: green to match other primary buttons */
+.btn-add.ant-btn,
+.btn-add.ant-btn.ant-btn-text {
+  background-color: #008661;
+  border: 1px solid #008661;
+  color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(82, 196, 26, 0.15);
+  transition: all 0.2s ease;
+}
+.btn-add.ant-btn:hover,
+.btn-add.ant-btn:focus,
+.btn-add.ant-btn.ant-btn-text:hover,
+.btn-add.ant-btn.ant-btn-text:focus {
+  background-color: #008661;
+  border-color: #008661;
+  color: #fff;
+  box-shadow: 0 4px 8px rgba(82, 196, 26, 0.25);
+}
+.btn-add .anticon {
+  color: #eaffea;
+}
 
 
 
