@@ -164,7 +164,7 @@ import { useRouter } from "vue-router";
 import { useStore } from "vuex";
 import {
   queryAllArticulo,
-} from "../util/dbSqliteM";
+} from "../util/dbLocal";
 import { useI18n } from "vue-i18n";
 import { DataItem } from "../util/interface";
 import { getAllData} from "../util/dbFirebase"

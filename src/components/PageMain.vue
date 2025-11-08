@@ -17,7 +17,7 @@ import { defineComponent, reactive, toRefs,
 import { PlusOutlined, FileSearchOutlined} from '@ant-design/icons-vue'
 import { useRouter} from 'vue-router'
 import { useStore } from 'vuex'
-import { initAllTable } from '../util/dbSqliteM'
+import { initAllTable } from '../util/dbLocal'
 import { useI18n} from "vue-i18n"
 import '../css/MainStyle.css';
 import { uploadAllTable} from '../util/dbFirebase'

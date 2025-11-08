@@ -94,7 +94,7 @@ import { reactive,
         onMounted} from 'vue'
 import { useRouter} from 'vue-router'
 import { useStore } from 'vuex'
-import { insertEmpresa, queryEmpresa, queryAllTree, selectClient} from '../util/dbSqliteM'
+import { insertEmpresa, queryEmpresa, queryAllTree, selectClient} from '../util/dbLocal'
 import { addOrUpdateData, getData, getAllData} from "../util/dbFirebase"
 import { useI18n} from "vue-i18n"
 import  dayjs from 'dayjs'

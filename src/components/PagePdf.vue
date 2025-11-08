@@ -201,7 +201,7 @@ import { useRouter, useRoute } from "vue-router";
 import { export_pdf } from "../util/exportPdf";
 import { useStore } from "vuex";
 import {
-  insertFactura } from "../util/dbSqliteM"
+  insertFactura } from "../util/dbLocal"
 import { DataItem, FormState } from "../util/interface";
 import dayjs from 'dayjs';
 import { DatePicker, message } from 'ant-design-vue';

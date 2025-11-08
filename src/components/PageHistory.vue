@@ -53,7 +53,7 @@
 <script lang="ts">
 import { defineComponent, reactive, toRefs, ref,
         onMounted, computed, createVNode, } from 'vue'
-import { queryFactura, deleteFactura} from '../util/dbSqliteM'
+import { queryFactura, deleteFactura} from '../util/dbLocal'
 import { useRouter} from 'vue-router'
 import { useStore } from 'vuex'
 import { useI18n} from "vue-i18n"

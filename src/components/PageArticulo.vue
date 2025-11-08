@@ -68,7 +68,7 @@ import {
   insertArticulo,
   queryAllArticulo,
   deleteArticulo,
-} from "../util/dbSqliteM"
+} from "../util/dbLocal"
 import { addOrUpdateData,  deleteData, getAllData} from "../util/dbFirebase"
 import { useStore } from 'vuex'
 //import { message } from 'ant-design-vue'

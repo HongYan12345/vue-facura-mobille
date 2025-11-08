@@ -4,7 +4,7 @@
       
     <div class="img_login">
         <img class="logo" alt="Logo" src="../assets/factura.png" />
-        <div>VueFactura</div>
+        <div>XieFactura</div>
     </div>
     
        
@@ -37,7 +37,7 @@
     </div>
     <div >
       <a-row justify="center">
-      <a-col :sm="{ span:18 }" :md="{ span:15 }" :lg="{ span:12 }">
+      <a-col :sm="{ span:22 }" :md="{ span:20 }" :lg="{ span:18 }">
       
         <div>
           <a-form
@@ -45,29 +45,28 @@
             ref="formRef"
             :model="formState"
             :rules="rules"
-            :label-col="labelCol"
-            :wrapper-col="wrapperCol"
+            layout="vertical"
             @finish="sendForm"
             @finishFailed="handleFinishFailed"
           >
 
-            <a-form-item label="Email" name="email">
+            <a-form-item :label="$t('email')" name="email">
               <a-input v-model:value="formState.email" spellcheck="false" type="email" />
             </a-form-item>
-            <a-form-item v-if="!formState.isRecupera" label="Password" name="password">
+            <a-form-item v-if="!formState.isRecupera" :label="$t('password')" name="password">
               <a-input v-model:value="formState.password" type="password" @clickedEnter="sendForm()"/>
             </a-form-item>
 
-            <a-form-item v-if="formState.isRecupera" label="Password" name="password">
-              <a-input v-model:value="formState.password" type="re_password" @clickedEnter="sendForm()"/>
+            <a-form-item v-if="formState.isRecupera" :label="$t('password')" name="password">
+              <a-input v-model:value="formState.password" type="password" @clickedEnter="sendForm()"/>
             </a-form-item>
 
-            <a-form-item v-if="formState.isRecupera" label="Re-Password" name="re_password">
-              <a-input v-model:value="formState.re_password" type="re_password" @clickedEnter="sendForm()"/>
+            <a-form-item v-if="formState.isRecupera" :label="$t('confirm_password')" name="re_password">
+              <a-input v-model:value="formState.re_password" type="password" @clickedEnter="sendForm()"/>
             </a-form-item>
     
-            <a-form-item v-if="!formState.isRecupera" :wrapper-col="{ span: 25, offset: 0 }">
-              <a-button type="primary" html-type="submit" :loading="loading" class="btn-normal"> Acceder</a-button>
+            <a-form-item v-if="!formState.isRecupera">
+              <a-button type="primary" html-type="submit" :loading="loading" class="btn-normal" block> {{ $t('login') }} </a-button>
             </a-form-item>
           </a-form>
                   </div>
@@ -78,7 +77,7 @@
     
   <a-row justify="space-between">
     <a-col :span="8">
-            <a-button v-if="formState.isRecupera" :loading="formState.loading"  class="btn_normal" @click="recuperar()">Recuperar</a-button>
+            <a-button v-if="formState.isRecupera" :loading="formState.loading"  class="btn_normal" @click="recuperar()">{{ $t('recover') }}</a-button>
             <a-button v-if="!formState.isRecupera" :loading="formState.loading" @click="googleSignIn()"><template #icon><GoogleOutlined /></template>Google</a-button>
     </a-col>
     <a-col :span="8">
@@ -130,7 +129,7 @@
             <FrownTwoTone twoToneColor="red" />
           </template>
           <template #extra>
-          <a-button type="primary" @click="volverLogin()">Volve a login</a-button>
+          <a-button type="primary" @click="volverLogin()">{{ $t('back') }}</a-button>
           </template>
       </a-result>
     </div>
@@ -141,10 +140,10 @@
 
   <a-modal
     v-model:visible="isOlvida"
-    title="Email:"
+    :title="$t('email') + ':'"
     @ok="handleOkEmail"
   >
-    <a-input v-model:value="formState.email" spellcheck="false">{{ $t("email") }}:</a-input>
+    <a-input v-model:value="formState.email" spellcheck="false" :placeholder="$t('email')" />
     <template #footer>
        
        <a-button
@@ -349,7 +348,7 @@ export default {
       formRef,
       rules,
       labelCol: { span: 4 },
-      wrapperCol: { span: 14 },
+      // wrapperCol removed due to vertical layout
       handleFinishFailed,
       loginVisitor,
       googleSignIn,

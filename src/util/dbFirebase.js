@@ -1,6 +1,6 @@
 import { doc, getDoc , setDoc, updateDoc, deleteDoc, collection, getDocs} from "firebase/firestore";
 import { db } from "./firebaseConfig";
-import { queryAllTree, queryAllArticulo, queryEmpresa, queryFactura} from "./dbSqliteM"
+import { queryAllTree, queryAllArticulo, queryEmpresa, queryFactura} from "./dbLocal"
 import { getAuth } from "firebase/auth"
 
 

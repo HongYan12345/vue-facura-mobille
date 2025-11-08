@@ -121,7 +121,7 @@ import {
   insertClient,
   deleteClient,
   queryAllTree,
-} from "../util/dbSqliteM"
+} from "../util/dbLocal"
 import { addOrUpdateData,  deleteData, getAllData} from "../util/dbFirebase"
 import { FormState} from '../util/interface'
 import { message, Modal} from 'ant-design-vue'
@@ -215,26 +215,31 @@ export default {
     }
 
     const dbStart = async () => {
-      initAllTable()
-      const dato = {
-        telefono: formState.telefono,
-        name: formState.name,
-        direccion: formState.direccion,
-        poblation: formState.poblation,
-        cp: formState.cp,
-        nif: formState.nif,
-        forma: formState.forma,
+      try {
+        await initAllTable()
+        const dato = {
+          telefono: formState.telefono,
+          name: formState.name,
+          direccion: formState.direccion,
+          poblation: formState.poblation,
+          cp: formState.cp,
+          nif: formState.nif,
+          forma: formState.forma,
+        }
+        console.log("[PageCliente]bd:", dato)
+        
+        if(!store.state.isVisitor){
+          await addOrUpdateData("clientes", formState.telefono, dato)
+        }
+        else{
+          await insertClient(dato)
+        }
+        message.success('Submit client success')
+        onClose()
+      } catch (e) {
+        console.error('[PageCliente] submit error:', e)
+        message.error('提交客户失败: ' + (e && e.message ? e.message : e))
       }
-      console.log("[PageCliente]bd:", dato)
-      
-      if(!store.state.isVisitor){
-        await addOrUpdateData("clientes", formState.telefono, dato)
-      }
-      else{
-        await insertClient(dato)
-      }
-      message.success('Submit client success')
-      onClose()
     }
 
     const delectCliente = (telefono: string) => {
@@ -245,7 +250,8 @@ export default {
         onOk() {
           
             deleteData("clientes", telefono)
-            deleteClient(Number(telefono))
+            // 数据库中 telefono 为字符型主键，保持字符串以避免删除失败
+            deleteClient(telefono)
             updatePage()
           
         },
