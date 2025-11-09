@@ -25,8 +25,9 @@
           <div style="font-size: 14px;"><strong>Forma de Pago: </strong> {{ forma }}</div>
         </div>
         <div style="text-align: right;">
-          <div style="width: 40mm; height: 40mm; border: 2px solid #000; box-sizing: border-box; background: #fff; margin: 6px 5px 0 auto; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #666;">
-            [40x40 mm QR CODE]
+          <div style="width: 40mm; height: 40mm; border: 2px solid #000; box-sizing: border-box; background: #fff; margin: 6px 5px 0 auto; display: flex; align-items: center; justify-content: center;">
+            <img v-if="qrDataUrl" :src="qrDataUrl" alt="QR Code" style="width: 100%; height: 100%; object-fit: contain;" />
+            <span v-else style="font-size: 10px; color: #666;">QR生成中...</span>
           </div>
           <div style="font-size: 12px; margin-top: 6px;">
             Factura verificable en la sede electrónica de la AEAT
@@ -39,33 +40,33 @@
         <div style="display: flex; flex-direction: column; gap: 4px;">
           <!-- 行1：公司与客户名称 -->
           <div style="display: flex;">
-            <div style="flex: 1; padding-right: 20px;"><strong>Empresa:</strong> {{ data_empresa.name }}</div>
-            <div style="flex: 1;"><strong>Cliente:</strong> {{ data_cliente.name }}</div>
+            <div style="flex: 1; padding-right: 20px;"><strong>Empresa:</strong> {{ viewEmpresa.name }}</div>
+            <div style="flex: 1;"><strong>Cliente:</strong> {{ viewCliente.name }}</div>
           </div>
           <!-- 行2：NIF -->
           <div style="display: flex;">
-            <div style="flex: 1; padding-right: 20px;">NIF: {{ data_empresa.nif }}</div>
-            <div style="flex: 1;">NIF: {{ data_cliente.nif }}</div>
+            <div style="flex: 1; padding-right: 20px;">NIF: {{ viewEmpresa.nif }}</div>
+            <div style="flex: 1;">NIF: {{ viewCliente.nif }}</div>
           </div>
           <!-- 行3：direccion -->
           <div style="display: flex;">
-            <div style="flex: 1; padding-right: 20px;">Dirección: {{ data_empresa.direccion }}</div>
-            <div style="flex: 1;">Dirección: {{ data_cliente.direccion }}</div>
+            <div style="flex: 1; padding-right: 20px;">Dirección: {{ viewEmpresa.direccion }}</div>
+            <div style="flex: 1;">Dirección: {{ viewCliente.direccion }}</div>
           </div>
           <!-- 行4：poblation -->
           <div style="display: flex;">
-            <div style="flex: 1; padding-right: 20px;">Localidad: {{ data_empresa.poblation }}</div>
-            <div style="flex: 1;">Localidad: {{ data_cliente.poblation }}</div>
+            <div style="flex: 1; padding-right: 20px;">Localidad: {{ viewEmpresa.poblation }}</div>
+            <div style="flex: 1;">Localidad: {{ viewCliente.poblation }}</div>
           </div>
           <!-- 行5：cp -->
           <div style="display: flex;">
-            <div style="flex: 1; padding-right: 20px;">Código Postal: {{ data_empresa.cp }}</div>
-            <div style="flex: 1;">Código Postal: {{ data_cliente.cp }}</div>
+            <div style="flex: 1; padding-right: 20px;">Código Postal: {{ viewEmpresa.cp }}</div>
+            <div style="flex: 1;">Código Postal: {{ viewCliente.cp }}</div>
           </div>
           <!-- 行6：telefone -->
           <div style="display: flex;">
-            <div style="flex: 1; padding-right: 20px;">Teléfono: {{ data_empresa.telefono }}</div>
-            <div style="flex: 1;">Teléfono: {{ data_cliente.telefono }}</div>
+            <div style="flex: 1; padding-right: 20px;">Teléfono: {{ viewEmpresa.telefono }}</div>
+            <div style="flex: 1;">Teléfono: {{ viewCliente.telefono }}</div>
           </div>
           <!-- 行7：预留空行 -->
           <div style="display: flex;">
@@ -206,7 +207,10 @@ import { DataItem, FormState } from "../util/interface";
 import dayjs from 'dayjs';
 import { DatePicker, message } from 'ant-design-vue';
 import "../css/PdfStyle.css"
-import { addOrUpdateData} from "../util/dbFirebase"
+import { addOrUpdateData, getAllData } from "../util/dbFirebase"
+import qrService, { QRCodeParams } from "../util/qrcode";
+import { QR_ENV } from "../util/config";
+import { queryEmpresa } from "../util/dbLocal"
 
 export default {
   components: { DatePicker},
@@ -218,22 +222,22 @@ export default {
       isHistory:0,
 
       data_empresa: ref<FormState>({
-        name: "MODASISI Y XJX SL",
-        direccion: "CL/ TORENO 40 LOCAL A",
-        nif: "887191698",
+        name: "",
+        direccion: "",
+        nif: "",
         forma: "",
-        poblation: "MADRID",
-        cp: "28970",
-        telefono: "65896670",
+        poblation: "",
+        cp: "",
+        telefono: "",
       }),
       data_cliente: ref<FormState>({
-        name: "MODASISI Y XJX SL",
-        direccion: "CL/ TORENO 40 LOCAL A",
-        nif: "887191698",
+        name: "",
+        direccion: "",
+        nif: "",
         forma: "",
-        poblation: "MADRID",
-        cp: "28970",
-        telefono: "65896670",
+        poblation: "",
+        cp: "",
+        telefono: "",
       }),
       dataSource: new Array<DataItem>(),
       dataSource_final: [
@@ -343,6 +347,16 @@ export default {
     onMounted(() => { window.addEventListener('resize', handleResize) })
     onUnmounted(() => { window.removeEventListener('resize', handleResize) })
     
+    // 供模板使用的“已解包”视图对象，避免 ref 嵌套导致空显示
+    const viewEmpresa = computed(() => {
+      const v: any = (data as any).data_empresa?.value ?? data.data_empresa
+      return v && typeof v === 'object' ? v : ({} as any)
+    })
+    const viewCliente = computed(() => {
+      const v: any = (data as any).data_cliente?.value ?? data.data_cliente
+      return v && typeof v === 'object' ? v : ({} as any)
+    })
+
     // 分页配置
     // 计算属�?
     const maxRowsFirstPage = 20; // 首页最多显�?0行商�?
@@ -404,6 +418,36 @@ export default {
       router.back();
     }
 
+    // 发票二维码
+    const qrDataUrl = ref('')
+    const qrUrl = ref('')
+    const computeImporte = (): number => {
+      const source = data.dataSource_final?.[0] || store.state.dataFinal
+      const toNum = (v: any) => {
+        const n = Number(String(v ?? '0').replace(',', '.'))
+        return isNaN(n) ? 0 : n
+      }
+      return toNum(source?.base) + toNum(source?.iva) + toNum(source?.re)
+    }
+    const generateInvoiceQR = async () => {
+      try {
+        const empresa = (data as any).data_empresa?.value ?? store.state.data_empresa
+        const params: QRCodeParams = {
+          nif: String(empresa?.nif ?? ''),
+          numserie: String(data.num ?? store.state.num ?? ''),
+          fecha: String(data.date ?? store.state.date ?? dayjs().format('DD/MM/YYYY')).replace(/\//g, '-'),
+          importe: computeImporte()
+        }
+        const result = await qrService.generateQRCode(params, QR_ENV, { width: 400, height: 400, margin: 2 })
+        qrDataUrl.value = result.dataUrl
+        qrUrl.value = result.url
+        console.log('[QR] url:', result.url)
+      } catch (e: any) {
+        console.error('[QR] 生成失败', e)
+        message.error(`二维码生成失败: ${e?.message || e}`)
+      }
+    }
+
     const exportPdf = async () => {
       if(data.isHistory == 0){
         savePdf()
@@ -412,6 +456,10 @@ export default {
       scaleEnabled.value = false
       await nextTick()
       try {
+        // 确保二维码已生成
+        if (!qrDataUrl.value) {
+          await generateInvoiceQR()
+        }
         const htmlElement = document.querySelector('#exportPdf');
         export_pdf(htmlElement, data.num)
       } finally {
@@ -422,38 +470,81 @@ export default {
     const savePdf = () => {
       const dataItemJson = JSON.stringify(data.dataSource);
       const dataFinalJson = JSON.stringify(data.dataSource_final[0]);
-      const dataEmpresaJson = JSON.stringify(data.data_empresa);
-      const dataClienteJson = JSON.stringify(data.data_cliente);
+      const dataEmpresaJson = JSON.stringify((data as any).data_empresa?.value ?? {});
+      const dataClienteJson = JSON.stringify((data as any).data_cliente?.value ?? {});
+      const numStr = String(data.num || "");
+      const dateStr = String(((data as any).date?.value ?? data.date) || "");
+      const formaStr = String(((data as any).forma?.value ?? data.forma) || "");
       const dato = {
         empresa: dataEmpresaJson,
         euro_final: dataFinalJson,
-        factura_date: data.date,
-        factura_num: data.num,
-        forma: data.forma,
-        id: data.num+data.date.split('/')[2],
+        factura_date: dateStr,
+        factura_num: numStr,
+        forma: formaStr,
+        id: numStr + (dateStr.split('/')[2] || ""),
         item_list: dataItemJson,
         user: dataClienteJson
       }
-      if(!store.state.isVisitor){
-        addOrUpdateData("facturas", dato.id, dato)
-      }
-      else{
-        insertFactura(dataClienteJson, dataEmpresaJson, dataItemJson, data.num, data.date, data.forma, dataFinalJson)
+      const canUploadCloud = store.state.isLogin && !store.state.isVisitor
+      if (canUploadCloud) {
+        // 登录且非游客，优先上传到云端；失败则回退到本地
+        addOrUpdateData("facturas", dato.id, dato).catch((e: any) => {
+          console.error("Error adding document:", e)
+          message.error('保存到云端失败，已改为本地保存')
+          insertFactura(dato)
+        })
+      } else {
+        // 游客或未登录，直接保存到本地
+        insertFactura(dato)
       }
       message.success('保存成功')
     };
 
     onMounted(() => {
-      data.forma = store.state.forma
+      // 回填基本信息，兼容 store 中为 ref 或原始值的情况
+      data.forma = (store.state.forma as any)?.value ?? store.state.forma
       data.num = store.state.num
-      data.date = store.state.date
+      data.date = (store.state.date as any)?.value ?? store.state.date
       data.dataSource = store.state.dataArray;
-      //data.data_cliente = store.state.data_cliente;
-      //data.data_empresa = store.state.data_empresa;
-      data.dataSource_final[0] = store.state.dataFinal;
+      // 绑定 store 中的公司与客户信息到预览（仅在有有效对象时赋值，避免嵌套 ref）
+      const stCliente: any = store.state.data_cliente
+      if (stCliente && typeof stCliente === 'object') {
+        const cliVal = Object.prototype.hasOwnProperty.call(stCliente, 'value') ? stCliente.value : stCliente
+        if (cliVal && typeof cliVal === 'object') {
+          (data as any).data_cliente.value = cliVal
+        }
+      }
+      const stEmpresa: any = store.state.data_empresa
+      if (stEmpresa && typeof stEmpresa === 'object') {
+        const empVal = Object.prototype.hasOwnProperty.call(stEmpresa, 'value') ? stEmpresa.value : stEmpresa
+        if (empVal && typeof empVal === 'object') {
+          (data as any).data_empresa.value = empVal
+        }
+      }
+      // 如果公司信息仍为空，兜底从持久化拉取一条（Firebase 或 本地库）
+      const hasEmpresa = !!((data as any).data_empresa.value && (data as any).data_empresa.value.name)
+      if (!hasEmpresa) {
+        if (!store.state.isVisitor) {
+          getAllData('empresa').then((value: any[]) => {
+            if (value && value[0]) {
+              (data as any).data_empresa.value = value[0]
+            }
+          }).catch(() => {})
+        } else {
+          queryEmpresa().then((value: any[]) => {
+            if (value && value[0]) {
+              (data as any).data_empresa.value = value[0]
+            }
+          }).catch(() => {})
+        }
+      }
+      // 回填合计信息（兼容 ref/对象）
+      data.dataSource_final[0] = (store.state.dataFinal as any)?.value ?? store.state.dataFinal;
       data.isHistory = Number(route.params.history)
       console.log("[PagePDF]",store.state.dataFinal);
       console.log("[PagePDF]data_cliente:", data.data_cliente);
+      // 加载二维码（依赖于上面填充的发票数据）
+      generateInvoiceQR()
     });
 
     // 计算总计（base + iva + re），兼容字符串与数字
@@ -471,6 +562,10 @@ export default {
       goBack,
       exportPdf,
       savePdf,
+      viewEmpresa,
+      viewCliente,
+      qrDataUrl,
+      qrUrl,
       sumTotal,
       firstPageRows,
       otherPages,

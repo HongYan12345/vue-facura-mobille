@@ -90,6 +90,7 @@
       <a-col :span="17">
         <a-input
           v-model:value="cantidad"
+          :class="{ 'input-error': errCantidad }"
           class="text-right"
           spellcheck="false"
           @input="validateNumberInput"
@@ -101,6 +102,7 @@
       <a-col :span="17">
         <a-input
           v-model:value="precio"
+          :class="{ 'input-error': errPrecio }"
           class="text-right"
           spellcheck="false"
           @blur="checkInput"
@@ -113,18 +115,22 @@
       <a-col :span="17">
         <a-input
           v-model:value="codigo"
+          :class="{ 'input-error': errCodigo }"
           class="text-right"
           spellcheck="false"
         ></a-input>
       </a-col>
     </a-row>
-    <div class="articulo-list">
-      <a-radio-group v-model:value="articulo" style="width: 100%">
-        <div v-for="opt in articulo_list" :key="opt.value" class="articulo-item">
-          <a-radio :value="opt.value">{{ opt.value }}</a-radio>
-        </div>
-      </a-radio-group>
-    </div>
+    <br>
+    <a-select
+      v-model:value="articulo"
+      show-search
+      placeholder="Select"
+      style="width: 100%"
+      :options="articulo_list"
+      :class="{ 'input-error': errArticulo }"
+    >
+    </a-select>
     <template #footer>
        <div class="button-container">
         <a-popconfirm
@@ -189,6 +195,13 @@ export default {
       precio: "",
       articulo: "",
       isEdit: "",
+      // validation flags
+      errCantidad: false,
+      errPrecio: false,
+      errCodigo: false,
+      errArticulo: false,
+      // 控制是否展示错误（首次点击保存后才显示）
+      showErrors: false,
       
     });
     const refData = toRefs(data);
@@ -274,6 +287,12 @@ export default {
       data.codigo = "";
       data.precio = "";
       data.articulo = "";
+      // 初始不展示错误，等用户点击保存时再判定
+      data.showErrors = false;
+      data.errCantidad = false;
+      data.errPrecio = false;
+      data.errCodigo = false;
+      data.errArticulo = false;
     };
     //modificar producto
     const editProducto = (item: DataItem) => {
@@ -284,6 +303,12 @@ export default {
       data.articulo = item.articulo;
       data.isEdit = item.key;
       data.ante_euro = item.euros;
+      // 编辑模式下预填，移除错误高亮
+      data.errCantidad = false;
+      data.errPrecio = false;
+      data.errCodigo = false;
+      data.errArticulo = false;
+      data.showErrors = false;
     };
     //delete producto
     const deleteProducto = (codigo: string) => {
@@ -300,6 +325,22 @@ export default {
     //save producto
     const saveProducto = () => {
       confirmLoading.value = true;
+
+      // required field validation: cantidad, precio, codigo, articulo must not be empty
+      data.showErrors = true;
+      const cantidadOk = String(data.cantidad).trim().length > 0
+      const precioOk = String(data.precio).trim().length > 0
+      const codigoOk = String(data.codigo).trim().length > 0
+      const articuloOk = String(data.articulo).trim().length > 0
+      data.errCantidad = !cantidadOk
+      data.errPrecio = !precioOk
+      data.errCodigo = !codigoOk
+      data.errArticulo = !articuloOk
+      if (!(cantidadOk && precioOk && codigoOk && articuloOk)) {
+        confirmLoading.value = false
+        // do not close modal, do not save
+        return
+      }
 
       if (data.isEdit != "") {
         for (const item of dataSource.value) {
@@ -335,6 +376,12 @@ export default {
       data.articulo = "";
       console.log("[PageTable]producto saved");
       confirmLoading.value = false;
+      // 保存成功后清理错误状态显示
+      data.showErrors = false;
+      data.errCantidad = false;
+      data.errPrecio = false;
+      data.errCodigo = false;
+      data.errArticulo = false;
     };
     const showArticulo = () => {
       if(!store.state.isVisitor){
@@ -364,16 +411,19 @@ export default {
 
     const checkInput = () => {
       data.precio = data.precio.replace(/,|，/g, '.');
+      // 输入过程中不改变错误状态，仅在保存时展示
     }
 
     const validatePrecioInput = () => {
       // 这一行将所有的非数字和非小数点/逗号的字符移除
       data.precio = data.precio.replace(/[^0-9.,，]/g, '');
+      // 输入过程中不改变错误状态，仅在保存时展示
     }
 
     const validateNumberInput = () => {
       // 这一行将所有的非数字和非小数点/逗号的字符移除
-      data.precio = data.precio.replace(/[^0-9]/g, '');
+      data.cantidad = data.cantidad.replace(/[^0-9]/g, '');
+      // 输入过程中不改变错误状态，仅在保存时展示
     };
 
     const pageUpdate = () => {
@@ -443,6 +493,8 @@ export default {
       checkInput,
       validatePrecioInput,
       validateNumberInput,
+      // expose validation flags to template
+      
       confirmLoading,
       goPdf,
       articulo_list,
@@ -542,5 +594,15 @@ export default {
   align-items: center;
   justify-content: center;
   margin-left: 10px;
+}
+
+/* validation red highlight */
+.input-error .ant-input,
+.input-error.ant-input,
+.input-error .ant-input-number,
+.input-error .ant-input-number-input,
+.input-error :deep(.ant-select-selector) {
+  border-color: #ff4d4f !important;
+  box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.15) !important;
 }
 </style>

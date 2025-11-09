@@ -5,9 +5,12 @@ import { getAuth } from "firebase/auth"
 
 
 export async function addOrUpdateData(collectionName, docId, data) {
- 
   const auth = getAuth();
-  const userId = auth.currentUser.uid; 
+  const user = auth.currentUser;
+  if (!user || !user.uid) {
+    throw new Error('Not authenticated: uid is null');
+  }
+  const userId = user.uid; 
   const docRef = doc(db, `users/${userId}/${collectionName}/${docId}`);
   const docSnap = await getDoc(docRef);
 
@@ -20,7 +23,11 @@ export async function addOrUpdateData(collectionName, docId, data) {
 
 export async function getData(collectionName, docId) {
   const auth = getAuth();
-  const userId = auth.currentUser.uid; 
+  const user = auth.currentUser;
+  if (!user || !user.uid) {
+    throw new Error('Not authenticated: uid is null');
+  }
+  const userId = user.uid; 
   const docRef = doc(db, `users/${userId}/${collectionName}/${docId}`);
     const docSnap = await getDoc(docRef);
   
@@ -34,7 +41,11 @@ export async function getData(collectionName, docId) {
 
 export async function getAllData(collectionName) {
   const auth = getAuth();
-  const userId = auth.currentUser.uid; 
+  const user = auth.currentUser;
+  if (!user || !user.uid) {
+    throw new Error('Not authenticated: uid is null');
+  }
+  const userId = user.uid; 
   const collectionRef = collection(db, "users", userId, collectionName);
   const snapshot = await getDocs(collectionRef);
 
@@ -48,7 +59,11 @@ export async function getAllData(collectionName) {
 
 export async function deleteData(collectionName, docId) {
   const auth = getAuth();
-  const userId = auth.currentUser.uid; 
+  const user = auth.currentUser;
+  if (!user || !user.uid) {
+    throw new Error('Not authenticated: uid is null');
+  }
+  const userId = user.uid; 
   await deleteDoc(doc(db,  `users/${userId}/${collectionName}/${docId}`));
 }
 

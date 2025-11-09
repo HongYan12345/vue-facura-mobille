@@ -252,7 +252,20 @@ function initTableFactura() {
     });
   });
 }
-export const insertFactura = (cliente, empresa, item_list, num, date, forma, euro_final) => {
+export const insertFactura = (...args) => {
+  let cliente, empresa, item_list, num, date, forma, euro_final
+  if (args.length === 1 && typeof args[0] === 'object') {
+    const row = args[0]
+    cliente = row.user
+    empresa = row.empresa
+    item_list = row.item_list
+    num = row.factura_num
+    date = row.factura_date
+    forma = row.forma
+    euro_final = row.euro_final
+  } else {
+    ;[cliente, empresa, item_list, num, date, forma, euro_final] = args
+  }
   return new Promise((resolve, reject) => {
     const db = conn()
     db.run(

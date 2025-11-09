@@ -6,7 +6,10 @@
   <div>
     <a-space direction="vertical" :size="12">
       <a-date-picker v-model:value="date" value-format="DD/MM/YYYY" :showToday="false"/>
-      <a-input-number addon-before="Nº" style="width:142px" v-model:value="num" :min="1" ></a-input-number>
+      <a-space direction="horizontal" :size="8">
+        <a-input addon-before="Serie" style="width:120px" v-model:value="serie" />
+        <a-input-number addon-before="Nº" style="width:142px" v-model:value="num" :min="1" />
+      </a-space>
       <a-radio-group class="btn-select" v-model:value="forma" button-style="solid" @change="handleChange">
         <a-radio-button value="TRANSFERENCIA">TRANSFERENCIA</a-radio-button>
         <a-radio-button value="EFECTIVO">EFECTIVO</a-radio-button>
@@ -80,7 +83,29 @@
     </a-modal>
     </a-col>
     <a-col :xs="24" :sm="12" :md="8" :lg="6">
-      
+      <!-- 证书(PFX) 上传与解析 -->
+      <div style="margin-top: 12px;">
+        <div style="font-weight: bold; margin-bottom: 6px;">证书(PFX)</div>
+        <input type="file" accept=".pfx,.p12" @change="onPfxFileSelected" />
+        <div v-if="pfxFileName" style="margin-top: 6px;">文件: {{ pfxFileName }}</div>
+        <div v-if="pfxInfo" style="margin-top: 6px; font-size: 12px;">
+          <div>主题CN: {{ pfxInfo.subjectCN || '-' }}</div>
+          <div>颁发者CN: {{ pfxInfo.issuerCN || '-' }}</div>
+          <div>序列号: {{ pfxInfo.serialNumber || '-' }}</div>
+          <div>有效期: {{ formatDate(pfxInfo.notBefore) }} ~ {{ formatDate(pfxInfo.notAfter) }}</div>
+          <div>私钥: {{ pfxInfo.hasPrivateKey ? '是' : '否' }}</div>
+          <div v-if="pfxInfo.sans && pfxInfo.sans.length">SAN: {{ pfxInfo.sans.join(', ') }}</div>
+        </div>
+      </div>
+      <a-modal
+        v-model:visible="pfxPasswordVisible"
+        title="输入证书密码"
+        :confirm-loading="confirmLoading"
+        @ok="handlePfxPasswordOk"
+        @cancel="resetPfxState"
+      >
+        <a-input v-model:value="pfxPassword" type="password" placeholder="证书密码" />
+      </a-modal>
     </a-col>
   </a-row>
 
@@ -98,6 +123,8 @@ import { insertEmpresa, queryEmpresa, queryAllTree, selectClient} from '../util/
 import { addOrUpdateData, getData, getAllData} from "../util/dbFirebase"
 import { useI18n} from "vue-i18n"
 import  dayjs from 'dayjs'
+import { parsePfx } from '../util/pfx'
+import { message } from 'ant-design-vue'
 
 export default {
   components: {},
@@ -106,6 +133,7 @@ export default {
       forma:ref('TRANSFERENCIA'),
       date: ref(dayjs().format('DD/MM/YYYY')),
       num: "",
+      serie: "",
       modifica_dato:false,
       empresa_name:"",
       empresa_direccion:"",
@@ -136,6 +164,11 @@ export default {
 //lista de clients
     const clients_list = ref([] as Array<{value: string, label: string}>)
     const confirmLoading = ref<boolean>(false);
+    const pfxFile = ref<File | null>(null)
+    const pfxFileName = ref('')
+    const pfxPasswordVisible = ref(false)
+    const pfxPassword = ref('')
+    const pfxInfo = ref<any>(null)
 
 //添加自家公司信息
     const modificaDato = () => {
@@ -253,11 +286,20 @@ export default {
         data.client_forma = store.state.data_cliente.forma
         
       }
-      data.num = store.state.num
+      // 解析序列号与数字部分：支持任意长度数字结尾。如 AB1234 -> serie=AB, num=1234
+      const stored = String(store.state.num || '')
+      const m2 = stored.match(/^(\D*)(\d+)$/)
+      if (m2) {
+        data.serie = m2[1] || ''
+        data.num = m2[2]
+      } else {
+        // 无法解析则保留为整体数字/字符串
+        data.serie = ''
+        data.num = stored
+      }
       data.date = store.state.date
       showEmpresa()
       showClient()
-      saveAll()
     }
 
     const selectCliente = (value: any)=>{
@@ -294,6 +336,48 @@ export default {
       
     }
 
+    // PFX 上传处理
+    const onPfxFileSelected = (e: Event) => {
+      const input = e.target as HTMLInputElement
+      const file = input.files && input.files[0]
+      if (!file) return
+      pfxFile.value = file
+      pfxFileName.value = file.name
+      pfxPasswordVisible.value = true
+    }
+
+    const handlePfxPasswordOk = async () => {
+      if (!pfxFile.value) return
+      confirmLoading.value = true
+      try {
+        const buf = await fileToArrayBuffer(pfxFile.value)
+        const info = await parsePfx(buf, pfxPassword.value)
+        pfxInfo.value = info
+        message.success('证书解析成功')
+      } catch (err: any) {
+        console.error('[PFX] 解析失败', err)
+        message.error(`证书解析失败: ${err?.message || err}`)
+      } finally {
+        confirmLoading.value = false
+        pfxPasswordVisible.value = false
+        pfxPassword.value = ''
+      }
+    }
+
+    const resetPfxState = () => {
+      pfxPasswordVisible.value = false
+      pfxPassword.value = ''
+    }
+
+    const fileToArrayBuffer = (file: File): Promise<ArrayBuffer> => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result as ArrayBuffer)
+        reader.onerror = reject
+        reader.readAsArrayBuffer(file)
+      })
+    }
+
     
     const saveAll = () =>{
       store.commit("saveEmpresa",{
@@ -304,10 +388,19 @@ export default {
           poblation: data.empresa_poblation,
           nif: data.empresa_nif
       })
+      // 拼接逻辑：
+      // - 若存在 serie 且 num 为纯数字，则补齐到5位并拼接
+      // - 若不存在 serie，直接使用 num 原值（允许字母+数字的混合形式）
+      const rawNumStr = String(data.num ?? '')
+      const onlyDigits = rawNumStr.replace(/[^0-9]/g, '')
+      const hasSerie = !!data.serie
+      const usePadded = hasSerie && onlyDigits.length > 0
+      const paddedNum = usePadded ? onlyDigits.padStart(5, '0') : rawNumStr
+      const combinedNum = (hasSerie ? String(data.serie) : '') + paddedNum
       store.commit("saveNum",{
-          num:data.num,
-          date:data.date,
-          forma:data.forma
+          num: combinedNum,
+          date: data.date,
+          forma: data.forma
       })
       store.commit("saveCliente",{
           name:data.client_name,
@@ -329,8 +422,10 @@ export default {
     }
 
     const validateNumberInput = () => {
-      // 这一行将所有的非数字和非小数点/逗号的字符移除
-      data.num = data.num.replace(/[^0-9]/g, '');
+      // 若用户输入包含字母（可能已包含 serie），则不强制清理；否则只保留数字
+      const valStr = String(data.num ?? '')
+      const hasLetters = /[A-Za-z]/.test(valStr)
+      data.num = hasLetters ? valStr : valStr.replace(/[^0-9]/g, '')
     };
 
     onMounted(() => {
@@ -352,6 +447,15 @@ export default {
       today,
       validateNumberInput,
       handleChange,
+      // PFX
+      pfxFileName,
+      pfxInfo,
+      pfxPasswordVisible,
+      pfxPassword,
+      onPfxFileSelected,
+      handlePfxPasswordOk,
+      resetPfxState,
+      formatDate: (d: Date | undefined) => (d ? dayjs(d).format('YYYY-MM-DD') : '-')
     };
   },
 };

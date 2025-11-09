@@ -18,15 +18,30 @@ function isCordova() {
 }
 
 async function getImpl() {
-  if (isCordova()) {
-    return await import('./dbSqliteM.js');
+  // Cordova
+  try {
+    if (isCordova()) {
+      return await import('./dbSqliteM.js');
+    }
+  } catch (e) {
+    console.warn('[dbLocal] cordova impl import failed, fallback to web:', e)
   }
-  // 默认优先 Electron，本地开发或打包的桌面端
-  if (isElectron()) {
-    return await import('./dbSqlite.js');
+  // Electron
+  try {
+    if (isElectron()) {
+      return await import('./dbSqlite.js');
+    }
+  } catch (e) {
+    console.warn('[dbLocal] electron impl import failed, fallback to web:', e)
   }
   // 浏览器环境：使用本地存储实现，避免 require 未定义错误
-  return await import('./dbWeb.js');
+  try {
+    return await import('./dbWeb.js');
+  } catch (e1) {
+    console.warn('[dbLocal] relative web impl import failed, try absolute:', e1)
+    // 兼容某些构建配置，尝试绝对路径
+    return await import('/src/util/dbWeb.js');
+  }
 }
 
 export async function initAllTable() {

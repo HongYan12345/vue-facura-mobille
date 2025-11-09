@@ -45,8 +45,18 @@ export const store = new Vuex.Store({
 
     saveNum: (state, objStorage) =>{
       state.num = objStorage.num
-      state.date = objStorage.date
-      state.forma = objStorage.forma
+      // keep ref types consistent for date
+      if (state.date && typeof state.date === 'object' && 'value' in (state.date as any)) {
+        ;(state.date as any).value = objStorage.date
+      } else {
+        ;(state as any).date = objStorage.date
+      }
+      // keep ref types consistent for forma
+      if (state.forma && typeof state.forma === 'object' && 'value' in (state.forma as any)) {
+        ;(state.forma as any).value = objStorage.forma
+      } else {
+        ;(state as any).forma = objStorage.forma
+      }
     },
 
     RESET_STATE(state) {
